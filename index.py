@@ -9,6 +9,7 @@ diretorio_imagens = os.path.join(diretorio_pricipal, 'imagens')
 diretorio_audio = os.path.join(diretorio_pricipal, 'audio')
 
 pygame.init()
+pygame.mixer.init()
 
 LARGURA = 640
 ALTURA = 480
@@ -36,14 +37,35 @@ class Dino(pygame.sprite.Sprite):
         self.index_lista = 0
         self.image = self.imagens_dino[self.index_lista] 
         self.rect = self.image.get_rect()
-        self.rect.center = (100,ALTURA - 90)
+        self.pos_y_ini = ALTURA - 64 - 96 // 2
+        self.rect.center = (100,ALTURA - 64)
+        self.pulo = False
 
+   
+    def pular (self):
+        self.pulo = True
+   
     def update(self):
+        if self.pulo == True:
+            if self.rect.y < 200:
+                self.pulo = False
+            self.rect.y -= 20
+        else:
+            if self.rect.y < self.pos_y_ini:
+                self.rect.y += 20
+            else: 
+                self.rect.y = self.pos_y_ini
+
         if self.index_lista > 2:
             self.index_lista = 0
 
         self.index_lista += 0.25
         self.image = self.imagens_dino[int(self.index_lista)]
+
+
+
+
+
 
 class Nuvens(pygame.sprite.Sprite):
     def __init__(self):
@@ -60,6 +82,20 @@ class Nuvens(pygame.sprite.Sprite):
             self.rect.y = randrange(50, 200, 50)
         self.rect.x -= 10
 
+class Chao (pygame.sprite.Sprite):
+    def __init__(self, pos_x):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = sprite_sheet.subsurface((6*32, 0), (32, 32))
+        self.image = pygame.transform.scale(self.image, (32*2, 32*2))
+        self.rect = self.image.get_rect()
+        self.rect.y = ALTURA - 64
+        self.rect.x = pos_x * 64
+
+    def update(self):
+        if self.rect.topright[0] < 0:
+            self.rect.x = LARGURA 
+        self.rect.x -= 10
+
 todas_as_sprites = pygame.sprite.Group()
 dino = Dino()
 todas_as_sprites.add(dino)
@@ -69,15 +105,28 @@ for i in range(7):
     nuvem = Nuvens()
     todas_as_sprites.add(nuvem)
 
+for i in range(LARGURA*2//64):
+    chao = Chao(i)
+    todas_as_sprites.add(chao)
+
+
+
+
 
 relogio = pygame.time.Clock()
 while True:
-    tela.fill(BRANCO)
+    tela.fill((255,0,255))
     relogio.tick(30)
     for event in pygame.event.get():
         if event.type == QUIT:
             pygame.quit()
             exit()
+        if event.type == KEYDOWN:
+            if event.key == K_SPACE:
+                if dino.rect.y != dino.pos_y_ini:
+                    pass
+                else:
+                    dino.pular()
 
     todas_as_sprites.draw(tela)
     todas_as_sprites.update()
